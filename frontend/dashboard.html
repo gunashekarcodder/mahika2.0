@@ -1,0 +1,95 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>MAHIKA - User Dashboard</title>
+   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <link rel="stylesheet" href="{% static 'css/main.css' %}">
+    <style>
+        /* --- COPY YOUR NEON STYLES HERE (Keeping them for you) --- */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Orbitron', monospace; background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #16213e 100%); color: #00ffff; min-height: 100vh; overflow-x: hidden; }
+        body::before { content: ''; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse"><path d="M 10 0 L 0 0 0 10" fill="none" stroke="rgba(0,255,255,0.1)" stroke-width="0.5"/></pattern></defs><rect width="100" height="100" fill="url(%23grid)"/></svg>'); opacity: 0.3; z-index: -1; }
+        
+        .top-nav { background: linear-gradient(90deg, #ff0080 0%, #8000ff 50%, #0080ff 100%); padding: 1.5rem 2rem; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #ff0080; box-shadow: 0 0 20px rgba(255, 0, 128, 0.5); }
+        .logo { font-size: 2.5rem; font-weight: 900; text-shadow: 0 0 10px #ff0080; color: #fff; }
+        .top-nav nav a { color: #00ffff; text-decoration: none; padding: 0.75rem 1.5rem; border: 1px solid #00ffff; border-radius: 5px; margin-left: 10px; transition: all 0.3s ease; text-shadow: 0 0 5px #00ffff; }
+        .top-nav nav a:hover { color: #fff; border-color: #ff0080; box-shadow: 0 0 15px #ff0080; }
+
+        .dashboard-container { padding: 2rem; display: flex; flex-direction: column; gap: 2rem; max-width: 1000px; margin: 0 auto; width: 100%; }
+        
+        .quick-actions { background: rgba(0, 0, 0, 0.8); border: 2px solid #00ffff; border-radius: 15px; padding: 2rem; text-align: center; box-shadow: 0 0 30px rgba(0, 255, 255, 0.5); }
+        .primary-panic-btn { background: linear-gradient(45deg, #ff0080, #ff4500); color: white; border: 2px solid #ff0080; padding: 1rem 2rem; border-radius: 10px; font-size: 1.5rem; font-weight: 700; cursor: pointer; animation: neonPulse 1.5s infinite alternate; transition: transform 0.3s; }
+        .primary-panic-btn:hover { transform: scale(1.05); }
+        @keyframes neonPulse { 0% { box-shadow: 0 0 20px rgba(255, 0, 128, 0.5); } 100% { box-shadow: 0 0 30px rgba(255, 0, 128, 0.8); } }
+
+        .status-card { background: rgba(0, 0, 0, 0.8); border: 2px solid #00ffff; border-radius: 15px; padding: 2rem; box-shadow: 0 0 15px rgba(0, 255, 255, 0.2); }
+        .status-card h2 { color: #00ffff; text-shadow: 0 0 10px #00ffff; margin-bottom: 10px; }
+        .status-card p { color: #fff; margin-bottom: 15px; }
+        .status-card a { color: #ff0080; text-decoration: none; font-weight: bold; }
+        
+        #map-display { 
+            height: 350px; /* Taller map */
+            background: rgba(15, 23, 42, 0.8); 
+            border: 1px solid #00ffff; 
+            border-radius: 8px; 
+            z-index: 1; /* Ensures map stays on top */
+        }
+       
+        .btn-link { background: #0080ff; color: white !important; padding: 10px 20px; border-radius: 5px; text-decoration: none; display: inline-block; }
+    </style>
+</head>
+<body>
+    <header class="top-nav">
+        <div class="logo">MAHIKA</div>
+        <nav>
+            <a href="{% url 'dashboard' %}">Dashboard</a>
+            <a href="{% url 'contacts' %}">Contacts</a>
+            <a href="{% url 'chat' %}">Chat</a>
+            <a href="{% url 'login' %}">Logout</a>
+        </nav>
+    </header>
+
+    <main class="dashboard-container">
+        <section class="quick-actions">
+            <h1>Welcome Back!</h1>
+            <p>Your safety tools are active.</p>
+            <button class="primary-panic-btn" id="sos-trigger-btn">
+                🚨 ACTIVATE EMERGENCY SOS 🚨
+            </button>
+        </section>
+
+        <section class="status-card">
+            <h2>👥 Trusted Contacts</h2>
+            <p>Manage the people who receive your SOS alerts.</p>
+            <a href="{% url 'contacts' %}" class="btn-link">Manage Contacts &rarr;</a>
+        </section>
+
+        <section class="status-card">
+            <h2>🌍 Real-Time Location</h2>
+            <p id="location-status">Initializing location services...</p>
+            <div id="map-display"> </div>
+        </section>
+
+        <section class="status-card">
+            <h2>💬 AI Companion</h2>
+            <p>Current Mode: <strong>Safety Buddy</strong></p>
+            <a href="{% url 'character_select' %}" class="btn-link">Change Companion &rarr;</a>
+        </section>
+    </main>
+
+  <script src="{% static 'js/location.js' %}"></script> 
+    <script src="{% static 'js/sos.js' %}"></script> 
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            if(window.startLocationTracking) window.startLocationTracking(); 
+        });
+    </script>
+</body>
+</html>

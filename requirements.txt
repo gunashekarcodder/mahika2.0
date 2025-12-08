@@ -1,0 +1,7 @@
+# mahika-mvp/requirements.txt
+Django>=4.2
+djangorestframework  # <-- THIS IS CRITICAL
+python-dotenv
+django-cors-headers
+pymysql
+Pillow

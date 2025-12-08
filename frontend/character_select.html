@@ -1,0 +1,64 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>MAHIKA - Select Companion</title>
+    <link rel="stylesheet" href="{% static 'css/main.css' %}">
+    <link rel="stylesheet" href="{% static 'css/character.css' %}">
+</head>
+<body>
+    <header class="top-nav">
+        <div class="logo">MAHIKA</div>
+        <nav>
+            <a href="{% url 'dashboard' %}">Dashboard</a>
+            <a href="{% url 'chat' %}">Chat</a>
+            <a href="#">Profile</a>
+        </nav>
+    </header>
+
+    <main class="char-container">
+        <h1>Choose Your Safety Companion</h1>
+        <p class="subtitle">Select the personality that makes you feel most safe and comfortable.</p>
+
+        <div class="character-grid">
+            <div class="character-card active" data-id="1" onclick="selectCharacter(1, 'Mahika - Safety Buddy')">
+                <div class="char-avatar safety">🛡️</div>
+                <h3>Mahika</h3>
+                <span class="badge">Safety Bot</span>
+                <p>Calm, focused, and protective. Prioritizes emergency protocols and clear advice.</p>
+                <button class="select-btn">Selected</button>
+            </div>
+
+            <div class="character-card" data-id="2" onclick="selectCharacter(2, 'Supportive Friend')">
+                <div class="char-avatar friend">💛</div>
+                <h3>Bestie</h3>
+                <span class="badge">Emotional Support</span>
+                <p>Warm, empathetic, and a great listener. Here to vent to and feel heard.</p>
+                <button class="select-btn">Select</button>
+            </div>
+
+            <div class="character-card" data-id="3" onclick="selectCharacter(3, 'Fun Bot')">
+                <div class="char-avatar fun">😄</div>
+                <h3>Fun Bot</h3>
+                <span class="badge">Humor</span>
+                <p>Light-hearted and jokey. Good for distraction, but still knows when to act.</p>
+                <button class="select-btn">Select</button>
+            </div>
+            
+            <div class="character-card create-new">
+                <div class="char-avatar new">+</div>
+                <h3>Create New</h3>
+                <p>Customize your own companion's personality and tone.</p>
+                <button class="select-btn">Create</button>
+            </div>
+        </div>
+        
+        <div class="action-area">
+            <button id="confirm-selection-btn" onclick="confirmAndGoToChat()">Start Chatting</button>
+        </div>
+    </main>
+
+    <script src="{% static 'js/character.js' %}"></script>
+</body>
+</html>

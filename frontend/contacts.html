@@ -1,0 +1,49 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>MAHIKA - Trusted Contacts</title>
+    <link rel="stylesheet" href="{% static 'css/main.css' %}">
+    <style>
+        .contact-container { max-width: 600px; margin: 50px auto; color: white; padding: 20px; }
+        .contact-form { background: #1e293b; padding: 20px; border-radius: 12px; margin-bottom: 20px; }
+        .contact-list { list-style: none; padding: 0; }
+        .contact-item { background: #334155; padding: 15px; margin-bottom: 10px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; }
+        input { width: 100%; padding: 10px; margin-bottom: 10px; border-radius: 5px; border: none; box-sizing: border-box; }
+        .btn-add { background: #22c55e; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; width: 100%; font-weight: bold; }
+        .btn-delete { background: #ef4444; color: white; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <header class="top-nav">
+        <div class="logo">MAHIKA</div>
+        <nav>
+            <a href="{% url 'dashboard' %}">Dashboard</a>
+            <a href="{% url 'contacts' %}">Contacts</a>
+        </nav>
+    </header>
+
+    <main class="contact-container">
+        <h1>Trusted Contacts</h1>
+        <p>These people will receive your SOS alerts and Live Location.</p>
+
+        <div class="contact-form">
+            <h3>Add New Contact</h3>
+            <form id="addContactForm">
+                <input type="text" id="c_name" placeholder="Name (e.g. Mom)" required>
+                <input type="email" id="c_email" placeholder="Email Address" required>
+                <input type="tel" id="c_phone" placeholder="Phone Number (Optional)">
+                <button type="submit" class="btn-add">Save Contact</button>
+            </form>
+        </div>
+
+        <h3>Your Contacts</h3>
+        <ul id="contactList" class="contact-list">
+            <li>Loading...</li>
+        </ul>
+    </main>
+
+    <script src="{% static 'js/contacts.js' %}"></script>
+</body>
+</html>
