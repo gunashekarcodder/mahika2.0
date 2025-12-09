@@ -47,7 +47,7 @@ MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
-    "django.middleware.csrf.CsrfViewMiddleware",
+    # "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
@@ -136,3 +136,6 @@ EMAIL_HOST_USER = 'chittigunashaker6@gmail.com'
 # 🚨 Generate a NEW 16-character App Password from Google and paste it here.
 # Do NOT use the long string you posted before. It should look like: 'abcd efgh ijkl mnop'
 EMAIL_HOST_PASSWORD = 'vasr glkn aidu yknz'
+
+
+GEMINI_API_KEY = "AIzaSyBnwNvrAhzz0zbJeo1QY1NISnqhc05ncJ0"

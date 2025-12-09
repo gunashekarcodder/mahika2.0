@@ -1,9 +1,7 @@
-# chat/urls.py
-
 from django.urls import path
 from . import views
 
 urlpatterns = [
-    # Main API endpoint for chat interaction
-    path('chat/', views.ChatAPIView.as_view(), name='chat_api'),
+    # Point to the new function 'chat_api'
+    path('chat/', views.chat_api, name='chat_api'),
 ]

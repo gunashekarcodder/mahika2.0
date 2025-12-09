@@ -1,0 +1,42 @@
+/* frontend/assets/css/main.css */
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap');
+
+body {
+    margin: 0;
+    font-family: 'Orbitron', sans-serif; /* Sci-Fi Font */
+    background: #0f172a;
+    color: #00ffff; /* Neon Cyan Text */
+}
+
+a { text-decoration: none; color: inherit; }
+
+/* Glowing Header */
+.top-nav {
+    display: flex;
+    justify-content: space-between;
+    padding: 1.5rem;
+    background: #1e293b;
+    border-bottom: 2px solid #ff0080; /* Neon Pink Border */
+    box-shadow: 0 0 15px #ff0080;
+}
+
+.logo { font-size: 1.8rem; font-weight: bold; color: #fff; text-shadow: 0 0 10px #ff0080; }
+
+.top-nav nav a {
+    margin-left: 20px;
+    color: #cbd5e1;
+    transition: 0.3s;
+}
+
+.top-nav nav a:hover {
+    color: #00ffff;
+    text-shadow: 0 0 10px #00ffff;
+}
+
+/* Card Styling */
+.card, .chat-main, .status-card, .quick-actions {
+    background: rgba(30, 41, 59, 0.8);
+    border: 1px solid #00ffff;
+    box-shadow: 0 0 10px rgba(0, 255, 255, 0.2);
+    border-radius: 12px;
+}

@@ -1,93 +1,80 @@
-from django.shortcuts import render
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+from django.core.mail import send_mail
+from django.conf import settings
+from core.models import TrustedContact
+import json
+import google.generativeai as genai
 
-# Create your views here.
-# chat/views.py
+# Configure the AI with your key
+try:
+    genai.configure(api_key=settings.GEMINI_API_KEY)
+except:
+    print("⚠️ Warning: Gemini API Key missing or invalid.")
 
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
-from django.db import transaction
-from django.contrib.auth import get_user_model
-from core.models import UserLocation # To save user's location snapshot
+@csrf_exempt
+def chat_api(request):
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Only POST allowed'}, status=405)
 
-from .models import Character, Conversation, Message
-from .serializers import ChatInputSerializer, MessageSerializer
-
-# Placeholder for detection/scoring logic (Bhagath/Manasa's module)
-def detect_and_score(text):
-    """Simulates calling the NLP/Detection Module."""
-    # TODO: Replace with an actual call to the detection microservice or function
-    
-    text_lower = text.lower()
-    
-    if 'danger' in text_lower or 'kill me' in text_lower or 'help' in text_lower:
-        score = 9
-        response_text = "I detect HIGH RISK. Please confirm your safety or press the SOS button!"
-    elif 'sad' in text_lower or 'bad day' in text_lower:
-        score = 4
-        response_text = "I hear you. I'm here to listen. Remember, I'm monitoring for safety."
-    else:
-        score = 1
-        response_text = "That's interesting! How does that relate to your safety concerns?"
+    try:
+        data = json.loads(request.body)
+        user_input = data.get('message', '').lower()
+        user_name = request.user.username if request.user.is_authenticated else "Friend"
         
-    return score, response_text
+        risk_score = 0
+        trigger_alert = False
+        reply = ""
 
-class ChatAPIView(APIView):
-    """Endpoint for sending messages and receiving responses/risk scores."""
-    permission_classes = [IsAuthenticated] # Requires Auth Module to be working
-
-    def post(self, request, *args, **kwargs):
-        # 1. Validate input data
-        serializer = ChatInputSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        data = serializer.validated_data
+        # --- 1. LOCAL SAFETY CHECK (Priority #1) ---
+        # We handle emergencies locally to ensure they never fail due to bad internet.
         
-        user = request.user
-        message_text = data['message']
-        char_id = data['char_id']
-        lat = data.get('lat')
-        lng = data.get('lng')
+        if any(w in user_input for w in ['kill', 'suicide', 'die', 'murder', 'blood', 'weapon', 'gun']):
+            risk_score = 10
+            trigger_alert = True
+            reply = "🚨 CRITICAL THREAT DETECTED. I am initiating emergency protocols. Please stay on the line."
 
-        try:
-            character = Character.objects.get(id=char_id)
-        except Character.DoesNotExist:
-            return Response({"detail": "Character not found."}, status=404)
+        elif any(w in user_input for w in ['danger', 'scared', 'hurt', 'follow', 'stalk', 'beat', 'pain', 'threat']):
+            risk_score = 8
+            trigger_alert = True
+            reply = f"{user_name}, I sense you are in danger. I am sending an alert to your trusted contacts now."
 
-        # 2. Find or create conversation
-        conversation, created = Conversation.objects.get_or_create(
-            user=user, character=character, defaults={'character': character}
-        )
+        # --- 2. ASK GEMINI AI (Priority #2) ---
+        # If no immediate danger, we let the AI handle the conversation.
+        else:
+            try:
+                # Set up the AI model
+                model = genai.GenerativeModel('gemini-pro')
+                
+                # Create a specific instruction for the AI
+                system_instruction = f"You are Mahika, a helpful, protective, and empathetic safety assistant. The user '{user_name}' says: '{user_input}'. Reply in 1-2 sentences. If they ask for help, give safety advice."
+                
+                # Get response
+                response = model.generate_content(system_instruction)
+                reply = response.text
+                risk_score = 0
+                
+            except Exception as ai_error:
+                print(f"⚠️ AI Error: {ai_error}")
+                # FALLBACK: If internet/key fails, use simulated logic so demo doesn't break
+                reply = "I am having trouble connecting to the cloud, but I am still monitoring your safety manually. How can I help?"
 
-        with transaction.atomic():
-            # 3. Save User's incoming message
-            Message.objects.create(
-                conversation=conversation, sender='user', text=message_text, risk_score=0
-            )
+        # --- 3. SEND SOS EMAIL ---
+        if trigger_alert and request.user.is_authenticated:
+            contacts = TrustedContact.objects.filter(user=request.user)
+            emails = [c.email for c in contacts if c.email]
+            if emails:
+                print(f"📧 Auto-Sending SOS to: {emails}")
+                try:
+                    send_mail(f"🚨 SOS: {user_name} Danger", f"Message: {user_input}", settings.EMAIL_HOST_USER, emails, fail_silently=False)
+                except: pass
 
-            # 4. Save User Location snapshot (Module 7)
-            if lat and lng:
-                 UserLocation.objects.create(user=user, latitude=lat, longitude=lng)
-            
-            # 5. Get Risk Score and Bot Response (Module 4 & 5)
-            risk_score, bot_response_text = detect_and_score(message_text)
-            
-            # 6. Check for high risk and trigger alert (Module 6)
-            if risk_score >= 8:
-                # TODO: Trigger Alerting Engine (calls Member D's module)
-                print(f"HIGH RISK DETECTED for user {user.username}. Score: {risk_score}")
-                # Placeholder: alert_triggered = True 
-
-            # 7. Save Bot's response
-            bot_message = Message.objects.create(
-                conversation=conversation, sender='bot', text=bot_response_text, risk_score=risk_score
-            )
-            
-        # 8. Return the bot's response and risk score
-        response_serializer = MessageSerializer(bot_message)
-        
-        return Response({
+        return JsonResponse({
             "status": "ok",
-            "bot_reply": response_serializer.data,
+            "bot_reply": { "text": reply, "sender": "bot" },
             "current_risk_score": risk_score,
-            "alert_triggered": risk_score >= 8 # Placeholder flag
-        }, status=201)
+            "alert_triggered": trigger_alert
+        })
+
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=400)

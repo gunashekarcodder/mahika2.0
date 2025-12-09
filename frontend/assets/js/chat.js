@@ -1,83 +1,86 @@
 // frontend/assets/js/chat.js
 
-// --- Configuration ---
-// Make sure this matches the path defined in mahika_project/urls.py (api/ + chat/)
-const CHAT_API_URL = 'http://127.0.0.1:8000/api/chat/'; 
-// Use the ID of the character you just created in the admin panel
-const DEFAULT_CHAR_ID = 1; 
+// ✅ CORRECT: This points to YOUR Django server. No key needed here.
+const CHAT_API_URL = '/api/chat/';
 
-// ... (rest of the file remains the same until handleChatSubmit)
+document.addEventListener('DOMContentLoaded', () => {
+    const sendBtn = document.getElementById('send-btn');
+    const chatInput = document.getElementById('chat-message');
+    const chatForm = document.getElementById('chat-form');
 
-// Inside the handleChatSubmit function:
-function handleChatSubmit(event) {
-    // ... (existing code to display message and scroll)
+    // Function to handle sending
+    async function sendMessage(e) {
+        if (e) e.preventDefault(); 
+        
+        const text = chatInput.value.trim();
+        if (!text) return;
 
-    // 3. Send message to Django API
-    sendToChatAPI(messageText);
+        // 1. Show User Text
+        addBubble(text, 'user');
+        chatInput.value = ''; 
+
+        // 2. Show "Typing..."
+        const loadingId = addBubble("Typing...", 'bot', true);
+
+        // ✅ GET USER TOKEN (This is the only "Key" the frontend needs)
+        const token = localStorage.getItem('mahika_jwt_token'); 
+
+        try {
+            const response = await fetch(CHAT_API_URL, {
+                method: 'POST',
+                headers: { 
+                    'Content-Type': 'application/json',
+                    // If you are logged in, this sends your ID securely:
+                    'Authorization': token ? `Bearer ${token}` : '' 
+                },
+                body: JSON.stringify({ message: text })
+            });
+
+            removeBubble(loadingId);
+
+            if (response.ok) {
+                const data = await response.json();
+                // 3. Show Real AI Reply
+                addBubble(data.bot_reply.text, 'bot');
+                
+                // 4. Handle Alerts
+                if(data.alert_triggered) {
+                    alert("⚠️ SAFETY ALERT TRIGGERED");
+                    document.body.style.border = "5px solid red";
+                }
+            } else {
+                addBubble("Server Error: I can't reply right now.", 'bot');
+            }
+        } catch (error) {
+            removeBubble(loadingId);
+            addBubble("Network Error: Check your connection.", 'bot');
+            console.error(error);
+        }
+    }
+
+    // Attach Listeners
+    if(sendBtn) sendBtn.addEventListener('click', sendMessage);
+    if(chatForm) chatForm.addEventListener('submit', sendMessage);
+});
+
+// UI Helpers
+function addBubble(text, sender, isTemp=false) {
+    const chatWindow = document.getElementById('chat-window');
+    const msgDiv = document.createElement('div');
+    msgDiv.classList.add('message', sender);
+    if (isTemp) msgDiv.id = 'temp-loading';
+    
+    const bubble = document.createElement('div');
+    bubble.classList.add('bubble');
+    bubble.innerText = text;
+    
+    msgDiv.appendChild(bubble);
+    chatWindow.appendChild(msgDiv);
+    chatWindow.scrollTop = chatWindow.scrollHeight;
+    return 'temp-loading';
 }
 
-
-// Modified function to use Fetch API
-function sendToChatAPI(message) {
-    // ⚠️ IMPORTANT: Authentication is not fully set up (Member A/E's task)
-    // We are using a dummy token or relying on the browser session for this test.
-    const token = localStorage.getItem('mahika_jwt_token') || 'dummy_token'; 
-    const currentCharacterId = DEFAULT_CHAR_ID; // Should come from a selector later
-
-    // Payload includes message and character ID
-    const payload = { 
-        message: message, 
-        char_id: currentCharacterId 
-        // NOTE: We omit lat/lng for now, but your location.js should provide this later
-    };
-
-    // Placeholder response for now
-    appendMessage("...Mahika is thinking...", 'bot');
-
-    fetch(CHAT_API_URL, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            // REQUIRED: Authorization header (only works if Auth Module is done)
-            // For now, this might fail unless you are logged into admin in the same browser session.
-            'Authorization': `Bearer ${token}` 
-        },
-        body: JSON.stringify(payload)
-    })
-    .then(response => {
-        // Handle unauthorized (401) or other errors (400, 500)
-        if (response.status === 401) {
-             alert("Authentication failed. Please log in.");
-             window.location.href = '/'; 
-        }
-        if (!response.ok) {
-            throw new Error(`Chat API failed with status: ${response.status}`);
-        }
-        return response.json();
-    })
-    .then(data => {
-        // Remove the thinking bubble
-        const thinkingBubble = chatWindow.querySelector('.message.bot:last-child');
-        if (thinkingBubble && thinkingBubble.innerText.includes('thinking')) {
-             thinkingBubble.remove();
-        }
-
-        // Display the real response from the backend
-        const botReplyText = data.bot_reply.text;
-        appendMessage(botReplyText, 'bot');
-        
-        console.log(`Risk Score: ${data.current_risk_score}, Alert Triggered: ${data.alert_triggered}`);
-        
-        // If high risk is detected, show a visual warning (Module 6 integration)
-        if (data.alert_triggered) {
-            alert("⚠️ URGENT RISK DETECTED! Prepare for emergency dispatch.");
-        }
-    })
-    .catch(error => {
-        // Remove the thinking bubble and show network error
-        const thinkingBubble = chatWindow.querySelector('.message.bot:last-child');
-        if (thinkingBubble) thinkingBubble.remove();
-        appendMessage(`Error: Could not connect to the API. ${error.message}`, 'bot');
-        console.error('Chat API Error:', error);
-    });
+function removeBubble(id) {
+    const el = document.getElementById(id);
+    if(el) el.remove();
 }
