@@ -142,4 +142,4 @@ EMAIL_HOST_PASSWORD = 'vasr glkn aidu yknz'
 # mahika_project/settings.py
 
 # Paste your Groq Key here
-GROQ_API_KEY = "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"
+GROQ_API_KEY = None  # REMOVED for security
