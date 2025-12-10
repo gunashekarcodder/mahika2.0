@@ -137,5 +137,9 @@ EMAIL_HOST_USER = 'chittigunashaker6@gmail.com'
 # Do NOT use the long string you posted before. It should look like: 'abcd efgh ijkl mnop'
 EMAIL_HOST_PASSWORD = 'vasr glkn aidu yknz'
 
+# mahika_project/settings.py
 
-GEMINI_API_KEY = "AIzaSyBnwNvrAhzz0zbJeo1QY1NISnqhc05ncJ0"
+# mahika_project/settings.py
+
+# Paste your Groq Key here
+GROQ_API_KEY = "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"

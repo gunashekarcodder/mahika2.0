@@ -1,46 +1,62 @@
 // frontend/assets/js/character.js
 
+// 1. Handle Card Selection
 function selectCharacter(id, name) {
-    // 1. Visually update cards: remove active class from all
+    // Remove 'active' class from all cards
     document.querySelectorAll('.character-card').forEach(card => {
         card.classList.remove('active');
+        // Reset button text
         const btn = card.querySelector('.select-btn');
-        if(btn) btn.innerText = "Select";
+        if (btn) btn.innerText = "Select";
     });
 
-    // 2. Add active class to clicked card
+    // Add 'active' class to the clicked card
     const activeCard = document.querySelector(`.character-card[data-id="${id}"]`);
     if (activeCard) {
         activeCard.classList.add('active');
-        activeCard.querySelector('.select-btn').innerText = "Selected";
+        // Change button text
+        const btn = activeCard.querySelector('.select-btn');
+        if (btn) btn.innerText = "Selected";
     }
 
-    // 3. Save selection to LocalStorage (so chat.js can read it)
+    // Save choice to LocalStorage (This connects to chat.js)
     localStorage.setItem('selected_char_id', id);
     localStorage.setItem('selected_char_name', name);
     
-    console.log(`Selected character: ${name} (ID: ${id})`);
+    console.log(`Character Selected: ${name} (ID: ${id})`);
 }
 
+// 2. Handle "Start Chatting" Button
 function confirmAndGoToChat() {
     const charId = localStorage.getItem('selected_char_id');
+    
     if (!charId) {
         alert("Please select a companion first.");
         return;
     }
-    // Redirect to chat page
+    
+    // Redirect to the Chat Page
     window.location.href = '/chat/';
 }
 
-// Initialize on page load
+// 3. Initialize (Restore previous selection)
 document.addEventListener('DOMContentLoaded', () => {
-    // Restore previous selection if exists
     const savedId = localStorage.getItem('selected_char_id');
-    if (savedId) {
-        const name = localStorage.getItem('selected_char_name');
-        selectCharacter(savedId, name);
+    const savedName = localStorage.getItem('selected_char_name');
+    
+    if (savedId && savedName) {
+        selectCharacter(savedId, savedName);
     } else {
         // Default to ID 1 (Mahika)
         selectCharacter(1, 'Mahika - Safety Buddy');
+    }
+    
+    // Handle the "Create New" button (Future Feature)
+    const createBtn = document.querySelector('.create-new .select-btn');
+    if(createBtn) {
+        createBtn.onclick = (e) => {
+            e.stopPropagation(); // Prevent bubbling
+            alert("Custom Character Creation is coming in Version 2.0!");
+        };
     }
 });

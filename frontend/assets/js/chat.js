@@ -33,7 +33,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     // If you are logged in, this sends your ID securely:
                     'Authorization': token ? `Bearer ${token}` : '' 
                 },
-                body: JSON.stringify({ message: text })
+                body: JSON.stringify({
+                    message: text,
+                    // ✅ READ THE ID FROM STORAGE
+                    char_id: localStorage.getItem('selected_char_id') || 1
+                })
             });
 
             removeBubble(loadingId);
@@ -84,3 +88,4 @@ function removeBubble(id) {
     const el = document.getElementById(id);
     if(el) el.remove();
 }
+
